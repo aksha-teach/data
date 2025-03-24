@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #portfolio { margin-top: 20px; }
+        table { width: 50%; margin: 0 auto; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+
+    <h2>Basic Portfolio Tracker</h2>
+
+    <!-- Stock Selection -->
+    <label for="asset-list">Select a Stock:</label>
+    <select id="asset-list">
+        <option value="AAPL">Apple (AAPL)</option>
+        <option value="GOOGL">Google (GOOGL)</option>
+        <option value="TSLA">Tesla (TSLA)</option>
+        <option value="AMZN">Amazon (AMZN)</option>
+        <option value="MSFT">Microsoft (MSFT)</option>
+    </select>
+    <button onclick="addAsset()">Add to Portfolio</button>
+
+    <!-- Portfolio Table -->
+    <div id="portfolio">
+        <h3>Your Portfolio</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Stock</th>
+                    <th>Performance (%)</th>
+                    <th>Remove</th>
+                </tr>
+            </thead>
+            <tbody id="portfolio-body">
+                <!-- Stocks will be added here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let portfolio = JSON.parse(localStorage.getItem("portfolio")) || [];
+
+        function addAsset()
+        {
+            const assetList = document.getElementById("asset-list");
+            const selectedAsset = assetList.value;
+
+            if (!portfolio.some(stock => stock.name === selectedAsset)) 
+            {
+                portfolio.push({ name: selectedAsset, change: "0.00" });
+                updatePortfolio();
+            }
+        }
+
+        function removeAsset(assetName) 
+        {
+            portfolio = portfolio.filter(stock => stock.name !== assetName);
+            updatePortfolio();
+        }
+
+        function getRandomPerformance() 
+        {
+            return (Math.random() * 10 - 5).toFixed(2); 
+        }
+
+        function updatePortfolio() 
+        {
+            localStorage.setItem("portfolio", JSON.stringify(portfolio));
+
+            const portfolioBody = document.getElementById("portfolio-body");
+            portfolioBody.innerHTML = portfolio.map
+            (stock => `
+                <tr>
+                    <td>${stock.name}</td>
+                    <td>${stock.change}%</td>
+                    <td><button onclick="removeAsset('${stock.name}')">Remove</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function updatePerformance() 
+        {
+            portfolio = portfolio.map(stock => 
+            ({
+                ...stock,
+                change: getRandomPerformance()
+            }));
+            updatePortfolio();
+        }
+
+        setInterval(updatePerformance, 3000); // Update every 3 seconds
+
+        // Load portfolio on page load
+        updatePortfolio();
+    </script>
+
+</body>
+</html>
