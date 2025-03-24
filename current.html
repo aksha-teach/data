@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Data Analytics Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #121212; color: white; }
+        #controls { margin-bottom: 20px; }
+        label, input, button { margin: 5px; padding: 8px; font-size: 16px; }
+        button { cursor: pointer; background-color: #007bff; color: white; border: none; }
+        .chart-container { width: 80%; margin: auto; }
+    </style>
+</head>
+<body>
+
+    <h2>Advanced Data Analytics Dashboard</h2>
+
+    <div id="controls">
+        <label>Select Metrics:</label>
+        <input type="checkbox" id="sma" checked> SMA
+        <input type="checkbox" id="ema" checked> EMA
+        <input type="checkbox" id="volatility" checked> Volatility
+        <input type="checkbox" id="rsi" checked> RSI
+        <button onclick="updateChart()">Update Chart</button>
+    </div>
+
+    <div class="chart-container">
+        <h3>Stock Price & Indicators</h3>
+        <div id="chart"></div>
+    </div>
+
+    <script>
+        
+        function generateRandomData(startValue, volatility, length) {
+            let data = [startValue];
+            for (let i = 1; i < length; i++) {
+                data.push(data[i - 1] + (Math.random() - 0.5) * volatility);
+            }
+            return data;
+        }
+
+    
+        function calculateSMA(data, period) {
+            let sma = Array(period - 1).fill(null);
+            for (let i = period - 1; i < data.length; i++) {
+                let sum = 0;
+                for (let j = 0; j < period; j++) {
+                    sum += data[i - j];
+                }
+                sma.push(sum / period);
+            }
+            return sma;
+        }
+
+        
+        function calculateEMA(data, period) {
+            let ema = [];
+            let multiplier = 2 / (period + 1);
+            ema[0] = data[0]; 
+            for (let i = 1; i < data.length; i++) {
+                ema.push((data[i] - ema[i - 1]) * multiplier + ema[i - 1]);
+            }
+            return ema;
+        }
+
+    
+        function calculateVolatility(data, period) {
+            let volatility = Array(period - 1).fill(null);
+            for (let i = period - 1; i < data.length; i++) {
+                let subset = data.slice(i - period + 1, i + 1);
+                let mean = subset.reduce((a, b) => a + b, 0) / subset.length;
+                let variance = subset.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / subset.length;
+                volatility.push(Math.sqrt(variance));
+            }
+            return volatility;
+        }
+
+
+        function calculateRSI(data, period = 14) {
+            let rsi = Array(period).fill(null);
+            for (let i = period; i < data.length; i++) {
+                let gains = 0, losses = 0;
+                for (let j = 0; j < period; j++) {
+                    let change = data[i - j] - data[i - j - 1];
+                    if (change > 0) gains += change;
+                    else losses -= change;
+                }
+                let avgGain = gains / period;
+                let avgLoss = losses / period;
+                let rs = avgGain / avgLoss;
+                rsi.push(100 - (100 / (1 + rs)));
+            }
+            return rsi;
+        }
+
+    
+        let dates = [];
+        let startDate = new Date();
+        for (let i = 0; i < 100; i++) {
+            let newDate = new Date(startDate);
+            newDate.setDate(startDate.getDate() + i);
+            dates.push(newDate.toISOString().split("T")[0]);
+        }
+
+        
+        let stockPrices = generateRandomData(100, 2, 100);
+
+        
+        function updateChart() {
+            let selectedMetrics = [];
+
+            
+            selectedMetrics.push({
+                x: dates,
+                y: stockPrices,
+                mode: 'lines',
+                name: 'Stock Price',
+                line: { color: 'blue' }
+            });
+
+            
+            if (document.getElementById("sma").checked) {
+                selectedMetrics.push({
+                    x: dates,
+                    y: calculateSMA(stockPrices, 10),
+                    mode: 'lines',
+                    name: 'SMA (10 days)',
+                    line: { color: 'red', dash: 'dot' }
+                });
+            }
+
+            
+            if (document.getElementById("ema").checked) {
+                selectedMetrics.push({
+                    x: dates,
+                    y: calculateEMA(stockPrices, 10),
+                    mode: 'lines',
+                    name: 'EMA (10 days)',
+                    line: { color: 'yellow', dash: 'dot' }
+                });
+            }
+
+            
+            if (document.getElementById("volatility").checked) {
+                selectedMetrics.push({
+                    x: dates,
+                    y: calculateVolatility(stockPrices, 10),
+                    mode: 'lines',
+                    name: 'Volatility',
+                    line: { color: 'purple' }
+                });
+            }
+
+        
+            if (document.getElementById("rsi").checked) {
+                selectedMetrics.push({
+                    x: dates,
+                    y: calculateRSI(stockPrices, 14),
+                    mode: 'lines',
+                    name: 'RSI (14 days)',
+                    line: { color: 'orange' }
+                });
+            }
+
+            // Plot chart
+            Plotly.newPlot('chart', selectedMetrics, {
+                title: 'Stock Price & Indicators',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Value' },
+                template: "plotly_dark"
+            });
+        }
+
+        // Load initial chart
+        updateChart();
+    </script>
+
+</body>
+</html>
